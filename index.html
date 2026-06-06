@@ -1,113 +1,139 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Honeycomb Incremental Game</title>
 <style>
-  body { font-family: Arial, sans-serif; background:#111; color:#eee; text-align:center; }
+    body {
+        margin: 0;
+        background: #111;
+        font-family: Arial, sans-serif;
+        color: white;
+    }
 
-  h1, h2 { margin: 10px 0; }
+    /* Bottom-left currency UI */
+    #pointsBox {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        width: 200px;
+        padding: 14px;
+        background: rgba(40, 40, 40, 0.9);
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
 
-  .section {
-    border:1px solid #444;
-    padding:10px;
-    margin:10px auto;
-    border-radius:6px;
-    width: 80%;
-    max-width: 900px;
-  }
+    #topRow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
-  button {
-    margin:4px;
-    padding:6px 10px;
-    cursor:pointer;
-  }
+    #icon {
+        font-size: 32px;
+        color: gold;
+        font-weight: bold;
+    }
 
-  .disabled {
-    opacity:0.4;
-    cursor:not-allowed;
-  }
+    #points {
+        font-size: 28px;
+        font-weight: bold;
+    }
 
-  /* REAL HONEYCOMB GRID */
-  .honeycomb {
-    width: 600px;
-    margin: 20px auto;
-    display: grid;
-    grid-template-columns: repeat(5, 120px);
-    grid-auto-rows: 104px;
-    gap: 10px;
-  }
+    #rate {
+        font-size: 16px;
+        color: #bbb;
+    }
 
-  .hex {
-    width: 120px;
-    height: 104px;
-    background: #222;
-    clip-path: polygon(
-      50% 0%, 93% 25%, 93% 75%,
-      50% 100%, 7% 75%, 7% 25%
-    );
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 5px;
-    border: 2px solid #555;
-    cursor: pointer;
-    font-size: 12px;
-  }
+    /* Honeycomb upgrade tree */
+    #tree {
+        position: fixed;
+        top: 50px;
+        right: 50px;
+        display: flex;
+        flex-wrap: wrap;
+        width: 400px;
+        gap: 10px;
+    }
 
-  .hex:hover { border-color: gold; }
-  .hex.disabled { opacity:0.4; cursor:not-allowed; }
+    .hex {
+        width: 90px;
+        height: 100px;
+        background: #222;
+        clip-path: polygon(
+            50% 0%, 93% 25%, 93% 75%,
+            50% 100%, 7% 75%, 7% 25%
+        );
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid #444;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .hex:hover {
+        border-color: gold;
+        transform: scale(1.05);
+    }
 </style>
 </head>
 <body>
 
-<h1>Honeycomb Incremental Game</h1>
-
-<!-- BASE -->
-<div class="section">
-  <h2>Base Layer</h2>
-  <p><b>Points:</b> <span id="points">0</span></p>
-  <p><b>Points per click:</b> <span id="ppc">1</span></p>
-  <p><b>Global Multiplier:</b> <span id="globalMult">1.00</span>x</p>
-  <p><b>Auto Gain:</b> <span id="autoGain">0.00</span>/sec</p>
-  <button onclick="gainPoints()">Click</button>
+<div id="pointsBox">
+    <div id="topRow">
+        <div id="icon">P</div>
+        <div id="points">0</div>
+    </div>
+    <div id="rate">+1 / sec</div>
 </div>
 
-<!-- HONEYCOMB TREE -->
-<div class="section">
-  <h2>Honeycomb Upgrade Tree</h2>
-  <p>Single‑buy & multi‑buy upgrades</p>
-
-  <div class="honeycomb">
-    <div class="hex" id="h1" onclick="buyHex('h1')">+1 PPC<br>Cost: 20</div>
-    <div class="hex" id="h2" onclick="buyHex('h2')">+10% PPC<br>Cost: 50</div>
-    <div class="hex" id="h3" onclick="buyHex('h3')">PPC x2<br>Cost: 200<br>(1‑buy)</div>
-    <div class="hex" id="h4" onclick="buyHex('h4')">+1% Auto<br>Cost: 150</div>
-    <div class="hex" id="h5" onclick="buyHex('h5')">Auto x2<br>Cost: 500<br>(1‑buy)</div>
-
-    <div class="hex" id="h6" onclick="buyHex('h6')">+5 PPC<br>Cost: 100</div>
-    <div class="hex" id="h7" onclick="buyHex('h7')">+15% Global<br>Cost: 300</div>
-    <div class="hex" id="h8" onclick="buyHex('h8')">Global x2<br>Cost: 1000<br>(1‑buy)</div>
-
-    <div class="hex" id="h9" onclick="buyHex('h9')">+20 PPC<br>Cost: 250</div>
-    <div class="hex" id="h10" onclick="buyHex('h10')">PPC x3<br>Cost: 1500<br>(1‑buy)</div>
-
-    <div class="hex" id="h11" onclick="buyHex('h11')">Unlock Auto<br>Cost: 2000<br>(1‑buy)</div>
-    <div class="hex" id="h12" onclick="buyHex('h12')">Auto x3<br>Cost: 5000<br>(1‑buy)</div>
-  </div>
+<div id="tree">
+    <div class="hex" onclick="unlockPrestige()">Prestige</div>
+    <div class="hex" onclick="unlockAscend()">Ascend</div>
+    <div class="hex" onclick="unlockDivinity()">Divinity</div>
 </div>
 
-<!-- PRESTIGE -->
-<div class="section">
-  <h2>Prestige</h2>
-  <p><b>Prestige Points:</b> <span id="prestigePoints">0</span></p>
-  <p><b>Prestige Multiplier:</b> <span id="prestigeMult">1.00</span>x</p>
-  <button onclick="prestige()">Prestige (1000 points)</button>
-</div>
+<script>
+    let points = 0;
+    let rate = 1;
 
-<!-- MEGA PRESTIGE -->
-<div class="section">
-  <h2>Mega Prestige</h2>
-  <p><b>Mega Points:</b> <span id="megaPoints">0</span></p>
-  <p><b>Mega Multiplier:</b> <span id="megaMult">
+    /* Big number formatter */
+    function format(n) {
+        const suffixes = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+        let tier = Math.floor(Math.log10(n) / 3);
+        if (tier < 1) return n;
+        let suffix = suffixes[tier];
+        let scale = Math.pow(10, tier * 3);
+        return (n / scale).toFixed(2) + suffix;
+    }
+
+    /* Points loop */
+    setInterval(() => {
+        points += rate;
+        document.getElementById("points").textContent = format(points);
+    }, 1000);
+
+    /* Reset layers */
+    function unlockPrestige() {
+        if (points < 1000) return alert("Need 1K Points");
+        points = 0;
+        rate += 2;
+        alert("Prestiged! +2/sec");
+    }
+
+    function unlockAscend() {
+        if (rate < 10) return alert("Need 10/sec");
+        rate += 10;
+        alert("Ascended! +10/sec");
+    }
+
+    function unlockDivinity() {
+        if (rate < 100) return alert("Need 100/sec");
+        rate += 100;
+        alert("Divinity unlocked! +100/sec");
+    }
+</script>
+
+</body>
+</html>
