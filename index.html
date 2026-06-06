@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upgrade Tree with Prestiges</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#111; color:#eee; }
+    .section { border:1px solid #444; padding:10px; margin:10px; border-radius:6px; }
+    button { margin:4px; padding:6px 10px; cursor:pointer; }
+    .disabled { opacity:0.4; cursor:not-allowed; }
+    h2, h3 { margin:4px 0; }
+  </style>
+</head>
+<body>
+  <h1>Incremental Upgrade Tree</h1>
+
+  <div class="section">
+    <h2>Base Layer</h2>
+    <p><b>Points:</b> <span id="points">0</span></p>
+    <p><b>Points per click:</b> <span id="ppc">1</span></p>
+    <button onclick="gainPoints()">Click for Points</button>
+
+    <h3>Base Upgrades</h3>
+    <button id="u1" onclick="buyUpgrade('u1')">
+      +1 Points per click (Cost: 10 points)
+    </button>
+    <button id="u2" onclick="buyUpgrade('u2')">
+      +5 Points per click (Cost: 100 points)
+    </button>
+    <button id="u3" onclick="buyUpgrade('u3')">
+      Multiply Points per click by 2 (Cost: 500 points)
+    </button>
+  </div>
+
+  <div class="section">
+    <h2>Prestige Layer</h2>
+    <p><b>Prestige Points:</b> <span id="prestigePoints">0</span></p>
+    <p><b>Prestige Multiplier:</b> <span id="prestigeMult">1.00</span>x</p>
+    <button id="prestigeBtn" onclick="prestige()">Prestige (requires 1,000 points)</button>
+
+    <h3>Prestige Upgrades</h3>
+    <button id="p1" onclick="buyPrestigeUpgrade('p1')">
+      +0.25x global multiplier (Cost: 5 PP)
+    </button>
+    <button id="p2" onclick="buyPrestigeUpgrade('p2')">
+      +1x global multiplier (Cost: 20 PP)
+    </button>
+    <button id="p3" onclick="buyPrestigeUpgrade('p3')">
+      Double prestige gain (Cost: 50 PP)
+    </button>
+  </div>
+
+  <div class="section">
+    <h2>Mega Prestige Layer</h2>
+    <p><b>Mega Prestige Points:</b> <span id="megaPoints">0</span></p>
+    <p><b>Mega Prestige Multiplier:</b> <span id="megaMult">1.00</span>x</p>
+    <button id="megaBtn" onclick="megaPrestige()">Mega Prestige (requires 50 Prestige Points)</button>
+
+    <h3>Mega Prestige Upgrades</h3>
+    <button id="m1" onclick="buyMegaUpgrade('m1')">
+      +2x global multiplier (Cost: 5 MP)
+    </button>
+    <button id="m2" onclick="buyMegaUpgrade('m2')">
+      Base upgrades are 50% cheaper (Cost: 10 MP)
+    </button>
+    <button id="m3" onclick="buyMegaUpgrade('m3')">
+      Prestiges give +50% more PP (Cost: 20 MP)
+    </button>
+  </div>
+
+  <script>
+    let points = 0;
+    let pointsPerClick = 1;
+
+    let prestigePoints = 0;
+    let prestigeMult = 1;
+    let prestigeGainMult = 1;
+
+    let megaPoints = 0;
+    let megaMult = 1;
+    let baseCostMult = 1;
+    let prestigeExtraGain = 1;
+
+    const upgrades = {
+      u1: { bought: false, cost: 10 },
+      u2: { bought: false, cost: 100 },
+      u3: { bought: false, cost: 500 }
+    };
+
+    const prestigeUpgrades = {
+      p1: { bought: false, cost: 5 },
+      p2: { bought: false, cost: 20 },
+      p3: { bought: false, cost: 50 }
+    };
+
+    const megaUpgrades = {
+      m1: { bought: false, cost: 5 },
+      m2: { bought: false, cost: 10 },
+      m3: { bought: false, cost: 20 }
+    };
+
+    function updateUI() {
+      document.getElementById('points').textContent = Math.floor(points);
+      document.getElementById('ppc').textContent = pointsPerClick.toFixed(2);
+      document.getElementById('prestigePoints').textContent = Math.floor(prestigePoints);
+      document.getElementById('prestigeMult').textContent = (prestigeMult * megaMult).toFixed(2);
+      document.getElementById('megaPoints').textContent = Math.floor(megaPoints);
+      document.getElementById('megaMult').textContent = megaMult.toFixed(2);
+
+      document.getElementById('prestigeBtn').className =
+        points >= 1000 ? '' : 'disabled';
+      document.getElementById('megaBtn').className =
+        prestigePoints >= 50 ? '' : 'disabled';
+    }
+
+    function totalMult() {
+      return prestigeMult * megaMult;
+    }
+
+    function gainPoints() {
+      points += pointsPerClick * totalMult();
+      updateUI();
+    }
+
+    function buyUpgrade(id) {
+      const up = upgrades[id];
+      const cost = up.cost * baseCostMult;
+      if (points >= cost && !up.bought) {
+        points -= cost;
+        up.bought = true;
+        if (id === 'u1') pointsPerClick += 1;
+        if (id === 'u2') pointsPerClick += 5;
+        if (id === 'u3') pointsPerClick *= 2;
+        document.getElementById(id).className = 'disabled';
+        updateUI();
+      }
+    }
+
+    function prestige() {
+      if (points < 1000) return;
+      const gained = Math.floor((points / 1000) * prestigeGainMult * prestigeExtraGain);
+      prestigePoints += gained;
+      points = 0;
+      pointsPerClick = 1;
+      Object.values(upgrades).forEach(u => u.bought = false);
+      document.getElementById('u1').className = '';
+      document.getElementById('u2').className = '';
+      document.getElementById('u3').className = '';
+      updateUI();
+    }
+
+    function buyPrestigeUpgrade(id) {
+      const up = prestigeUpgrades[id];
+      if (prestigePoints >= up.cost && !up.bought) {
+        prestigePoints -= up.cost;
+        up.bought = true;
+        if (id === 'p1') prestigeMult += 0.25;
+        if (id === 'p2') prestigeMult += 1;
+        if (id === 'p3') prestigeGainMult *= 2;
+        document.getElementById(id).className = 'disabled';
+        updateUI();
+      }
+    }
+
+    function megaPrestige() {
+      if (prestigePoints < 50) return;
+      const gained = Math.floor(prestigePoints / 50);
+      megaPoints += gained;
+      prestigePoints = 0;
+      prestigeMult = 1;
+      prestigeGainMult = 1;
+      Object.values(prestigeUpgrades).forEach(u => u.bought = false);
+      document.getElementById('p1').className = '';
+      document.getElementById('p2').className = '';
+      document.getElementById('p3').className = '';
+      updateUI();
+    }
+
+    function buyMegaUpgrade(id) {
+      const up = megaUpgrades[id];
+      if (megaPoints >= up.cost && !up.bought) {
+        megaPoints -= up.cost;
+        up.bought = true;
+        if (id === 'm1') megaMult *= 2;
+        if (id === 'm2') baseCostMult *= 0.5;
+        if (id === 'm3') prestigeExtraGain *= 1.5;
+        document.getElementById(id).className = 'disabled';
+        updateUI();
+      }
+    }
+
+    updateUI();
+  </script>
+</body>
+</html>
