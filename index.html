@@ -9,7 +9,7 @@
         color: white;
     }
 
-    /* Bottom-left currency UI */
+    /* Currency UI */
     #pointsBox {
         position: fixed;
         bottom: 20px;
@@ -45,20 +45,20 @@
         color: #bbb;
     }
 
-    /* Honeycomb upgrade tree */
+    /* Honeycomb Tree */
     #tree {
         position: fixed;
         top: 50px;
         right: 50px;
+        width: 500px;
         display: flex;
         flex-wrap: wrap;
-        width: 400px;
         gap: 10px;
     }
 
     .hex {
-        width: 90px;
-        height: 100px;
+        width: 100px;
+        height: 110px;
         background: #222;
         clip-path: polygon(
             50% 0%, 93% 25%, 93% 75%,
@@ -70,16 +70,25 @@
         border: 2px solid #444;
         cursor: pointer;
         transition: 0.2s;
+        text-align: center;
+        padding: 10px;
     }
 
     .hex:hover {
         border-color: gold;
         transform: scale(1.05);
     }
+
+    .locked {
+        opacity: 0.4;
+        border-color: #333;
+        cursor: default;
+    }
 </style>
 </head>
 <body>
 
+<!-- Currency UI -->
 <div id="pointsBox">
     <div id="topRow">
         <div id="icon">P</div>
@@ -88,51 +97,89 @@
     <div id="rate">+1 / sec</div>
 </div>
 
-<div id="tree">
-    <div class="hex" onclick="unlockPrestige()">Prestige</div>
-    <div class="hex" onclick="unlockAscend()">Ascend</div>
-    <div class="hex" onclick="unlockDivinity()">Divinity</div>
-</div>
+<!-- Honeycomb Upgrade Tree -->
+<div id="tree"></div>
 
 <script>
-    let points = 0;
-    let rate = 1;
+/* ===========================
+   BIG NUMBER FORMATTER
+=========================== */
+function format(n) {
+    const suffixes = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+    if (n < 1000) return n;
+    let tier = Math.floor(Math.log10(n) / 3);
+    let suffix = suffixes[tier];
+    let scale = Math.pow(10, tier * 3);
+    return (n / scale).toFixed(2) + suffix;
+}
 
-    /* Big number formatter */
-    function format(n) {
-        const suffixes = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
-        let tier = Math.floor(Math.log10(n) / 3);
-        if (tier < 1) return n;
-        let suffix = suffixes[tier];
-        let scale = Math.pow(10, tier * 3);
-        return (n / scale).toFixed(2) + suffix;
-    }
+/* ===========================
+   PLAYER STATS
+=========================== */
+let points = 0;
+let rate = 1;
 
-    /* Points loop */
-    setInterval(() => {
-        points += rate;
-        document.getElementById("points").textContent = format(points);
-    }, 1000);
+/* ===========================
+   UPGRADE TREE DATA
+=========================== */
+let upgrades = [
+    { id: 1, name: "Prestige", cost: 1000, unlocked: true, effect: () => { rate += 2; } },
+    { id: 2, name: "Prestige Boost", cost: 5000, unlocked: false, effect: () => { rate += 5; } },
+    { id: 3, name: "Ascend", cost: 100000, unlocked: false, effect: () => { rate += 20; } },
+    { id: 4, name: "Ascend Boost", cost: 500000, unlocked: false, effect: () => { rate += 50; } },
+    { id: 5, name: "Divinity", cost: 10000000, unlocked: false, effect: () => { rate += 200; } },
+    { id: 6, name: "Divine Boost", cost: 50000000, unlocked: false, effect: () => { rate += 500; } }
+];
 
-    /* Reset layers */
-    function unlockPrestige() {
-        if (points < 1000) return alert("Need 1K Points");
-        points = 0;
-        rate += 2;
-        alert("Prestiged! +2/sec");
-    }
+/* ===========================
+   RENDER HONEYCOMB TREE
+=========================== */
+function renderTree() {
+    const tree = document.getElementById("tree");
+    tree.innerHTML = "";
 
-    function unlockAscend() {
-        if (rate < 10) return alert("Need 10/sec");
-        rate += 10;
-        alert("Ascended! +10/sec");
-    }
+    upgrades.forEach(upg => {
+        let hex = document.createElement("div");
+        hex.className = "hex";
+        if (!upg.unlocked) hex.classList.add("locked");
 
-    function unlockDivinity() {
-        if (rate < 100) return alert("Need 100/sec");
-        rate += 100;
-        alert("Divinity unlocked! +100/sec");
-    }
+        hex.innerHTML = `${upg.name}<br><small>${format(upg.cost)}</small>`;
+
+        hex.onclick = () => buyUpgrade(upg.id);
+
+        tree.appendChild(hex);
+    });
+}
+
+/* ===========================
+   BUY UPGRADE
+=========================== */
+function buyUpgrade(id) {
+    let upg = upgrades.find(u => u.id === id);
+    if (!upg.unlocked) return;
+    if (points < upg.cost) return;
+
+    points -= upg.cost;
+    upg.effect();
+
+    // Unlock next upgrade
+    let next = upgrades.find(u => u.id === id + 1);
+    if (next) next.unlocked = true;
+
+    renderTree();
+}
+
+/* ===========================
+   POINTS LOOP
+=========================== */
+setInterval(() => {
+    points += rate;
+    document.getElementById("points").textContent = format(points);
+    document.getElementById("rate").textContent = `+${format(rate)} / sec`;
+}, 1000);
+
+/* Start */
+renderTree();
 </script>
 
 </body>
