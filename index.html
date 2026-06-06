@@ -193,3 +193,38 @@
   </script>
 </body>
 </html>
+
+.honeycomb {
+  display: grid;
+  grid-template-columns: repeat(5, 100px);
+  grid-auto-rows: 86px;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.hex {
+  width: 100px;
+  height: 86px;
+  background: #222;
+  clip-path: polygon(
+    50% 0%, 93% 25%, 93% 75%,
+    50% 100%, 7% 75%, 7% 25%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 5px;
+  border: 2px solid #555;
+  cursor: pointer;
+}
+
+.hex:hover {
+  border-color: gold;
+}
+
+.hex.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
