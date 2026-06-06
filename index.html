@@ -45,15 +45,22 @@
         color: #bbb;
     }
 
-    /* Honeycomb Tree */
+    /* Honeycomb Grid */
     #tree {
         position: fixed;
-        top: 50px;
-        right: 50px;
-        width: 500px;
+        top: 40px;
+        right: 40px;
+        width: 600px;
+    }
+
+    .hex-row {
         display: flex;
-        flex-wrap: wrap;
         gap: 10px;
+        margin-bottom: -25px; /* hex overlap */
+    }
+
+    .hex-row.offset {
+        margin-left: 55px;
     }
 
     .hex {
@@ -72,6 +79,7 @@
         transition: 0.2s;
         text-align: center;
         padding: 10px;
+        font-size: 14px;
     }
 
     .hex:hover {
@@ -80,7 +88,7 @@
     }
 
     .locked {
-        opacity: 0.4;
+        opacity: 0.35;
         border-color: #333;
         cursor: default;
     }
@@ -97,7 +105,7 @@
     <div id="rate">+1 / sec</div>
 </div>
 
-<!-- Honeycomb Upgrade Tree -->
+<!-- Honeycomb Tree -->
 <div id="tree"></div>
 
 <script>
@@ -120,34 +128,65 @@ let points = 0;
 let rate = 1;
 
 /* ===========================
-   UPGRADE TREE DATA
+   FULL HONEYCOMB TREE DATA
 =========================== */
 let upgrades = [
-    { id: 1, name: "Prestige", cost: 1000, unlocked: true, effect: () => { rate += 2; } },
-    { id: 2, name: "Prestige Boost", cost: 5000, unlocked: false, effect: () => { rate += 5; } },
-    { id: 3, name: "Ascend", cost: 100000, unlocked: false, effect: () => { rate += 20; } },
-    { id: 4, name: "Ascend Boost", cost: 500000, unlocked: false, effect: () => { rate += 50; } },
-    { id: 5, name: "Divinity", cost: 10000000, unlocked: false, effect: () => { rate += 200; } },
-    { id: 6, name: "Divine Boost", cost: 50000000, unlocked: false, effect: () => { rate += 500; } }
+    // Row 1
+    { id: 1, name: "Points Boost I", cost: 100, unlocked: true, effect: () => rate += 1 },
+    { id: 2, name: "Points Boost II", cost: 500, unlocked: false, effect: () => rate += 2 },
+    { id: 3, name: "Points Boost III", cost: 2000, unlocked: false, effect: () => rate += 5 },
+
+    // Row 2
+    { id: 4, name: "Prestige", cost: 10000, unlocked: false, effect: () => rate += 20 },
+    { id: 5, name: "Prestige Boost I", cost: 50000, unlocked: false, effect: () => rate += 50 },
+    { id: 6, name: "Prestige Boost II", cost: 200000, unlocked: false, effect: () => rate += 100 },
+
+    // Row 3
+    { id: 7, name: "Ascend", cost: 1000000, unlocked: false, effect: () => rate += 300 },
+    { id: 8, name: "Ascend Boost I", cost: 5000000, unlocked: false, effect: () => rate += 800 },
+    { id: 9, name: "Ascend Boost II", cost: 20000000, unlocked: false, effect: () => rate += 1500 },
+
+    // Row 4
+    { id: 10, name: "Divinity", cost: 100000000, unlocked: false, effect: () => rate += 5000 },
+    { id: 11, name: "Divine Boost I", cost: 500000000, unlocked: false, effect: () => rate += 12000 },
+    { id: 12, name: "Divine Boost II", cost: 2000000000, unlocked: false, effect: () => rate += 25000 }
 ];
 
 /* ===========================
-   RENDER HONEYCOMB TREE
+   HONEYCOMB LAYOUT
+=========================== */
+let layout = [
+    [1, 2, 3],        // Row 1
+    [4, 5, 6],        // Row 2 (offset)
+    [7, 8, 9],        // Row 3
+    [10, 11, 12]      // Row 4 (offset)
+];
+
+/* ===========================
+   RENDER TREE
 =========================== */
 function renderTree() {
     const tree = document.getElementById("tree");
     tree.innerHTML = "";
 
-    upgrades.forEach(upg => {
-        let hex = document.createElement("div");
-        hex.className = "hex";
-        if (!upg.unlocked) hex.classList.add("locked");
+    layout.forEach((row, i) => {
+        let rowDiv = document.createElement("div");
+        rowDiv.className = "hex-row";
+        if (i % 2 === 1) rowDiv.classList.add("offset");
 
-        hex.innerHTML = `${upg.name}<br><small>${format(upg.cost)}</small>`;
+        row.forEach(id => {
+            let upg = upgrades.find(u => u.id === id);
+            let hex = document.createElement("div");
+            hex.className = "hex";
+            if (!upg.unlocked) hex.classList.add("locked");
 
-        hex.onclick = () => buyUpgrade(upg.id);
+            hex.innerHTML = `${upg.name}<br><small>${format(upg.cost)}</small>`;
+            hex.onclick = () => buyUpgrade(upg.id);
 
-        tree.appendChild(hex);
+            rowDiv.appendChild(hex);
+        });
+
+        tree.appendChild(rowDiv);
     });
 }
 
@@ -162,7 +201,7 @@ function buyUpgrade(id) {
     points -= upg.cost;
     upg.effect();
 
-    // Unlock next upgrade
+    // Unlock next upgrade in the row
     let next = upgrades.find(u => u.id === id + 1);
     if (next) next.unlocked = true;
 
